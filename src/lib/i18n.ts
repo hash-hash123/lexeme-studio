@@ -2,7 +2,7 @@ import type { LanguageCode } from '../types'
 
 const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
   ja: {
-    brand: 'Lexeme Studio',
+    brand: 'てつの語学教室',
     strapline: '語彙概念中心の多言語 SRS',
     dashboard: 'ダッシュボード',
     review: '復習',
@@ -118,7 +118,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     purposeReading: '読書・ニュース',
   },
   en: {
-    brand: 'Lexeme Studio',
+    brand: 'てつの語学教室',
     strapline: 'lexeme-first multilingual SRS',
     dashboard: 'Dashboard',
     review: 'Review',
@@ -234,7 +234,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     purposeReading: 'Reading / news',
   },
   de: {
-    brand: 'Lexeme Studio',
+    brand: 'てつの語学教室',
     strapline: 'mehrsprachiges SRS mit Lexem-Fokus',
     dashboard: 'Übersicht',
     review: 'Wiederholung',
