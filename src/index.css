@@ -604,3 +604,132 @@ input[type='text'],
   color: #b91c1c;
   font-size: 0.9rem;
 }
+
+/* Modal (level diagnostic etc.) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.75rem;
+  background: #ffffff;
+  border-radius: 1.25rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+}
+
+.modal-hint {
+  color: rgba(30, 41, 59, 0.75);
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.diagnostic-word {
+  text-align: center;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: var(--accent-soft, rgba(15, 118, 110, 0.14));
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.diagnostic-word strong {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.diagnostic-word span {
+  font-size: 0.8rem;
+  color: rgba(30, 41, 59, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.diagnostic-word em {
+  font-style: normal;
+  color: rgba(30, 41, 59, 0.65);
+  font-size: 0.95rem;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.modal-actions .primary-button,
+.modal-actions .secondary-button {
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+}
+
+.modal-actions .primary-button {
+  background: var(--accent, #0f766e);
+  color: white;
+}
+
+.modal-actions .secondary-button {
+  background: transparent;
+  color: var(--accent, #0f766e);
+  border: 1px solid var(--accent, #0f766e);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: rgba(30, 41, 59, 0.7);
+}
+
+.link-button {
+  background: none;
+  border: 0;
+  color: rgba(30, 41, 59, 0.8);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+/* Cloze-specific */
+.cloze-prompt {
+  font-size: 1.35rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.cloze-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+  color: rgba(30, 41, 59, 0.7);
+}
+
+.cloze-hint strong {
+  color: rgba(30, 41, 59, 0.95);
+  font-weight: 600;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

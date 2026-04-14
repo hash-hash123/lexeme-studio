@@ -41,7 +41,7 @@ export function DashboardView({
     recallAccuracy: number
     weakSpots: Array<{
       partOfSpeech: 'interjection' | 'noun' | 'verb' | 'adjective'
-      variant: 'recognition' | 'recall'
+      variant: 'recognition' | 'recall' | 'cloze'
       count: number
     }>
   }

@@ -35,7 +35,7 @@ interface ConceptSeed {
   collocations: Record<LanguageCode, string[]>
 }
 
-export const SUPPORTED_VARIANTS: CardVariantKind[] = ['recognition', 'recall']
+export const SUPPORTED_VARIANTS: CardVariantKind[] = ['recognition', 'recall', 'cloze']
 
 export const LANGUAGES: Language[] = [
   {
@@ -101,6 +101,11 @@ export const LEVEL_LABELS: Record<LevelCode, LocalizedText> = {
     en: 'L1 ultra-beginner',
     de: 'L1 erste Grundlagen',
   },
+  L2: {
+    ja: 'L2 初級',
+    en: 'L2 beginner',
+    de: 'L2 Anfaenger',
+  },
 }
 
 export const PURPOSE_LABELS: Record<LearningPurpose, LocalizedText> = {
@@ -149,6 +154,18 @@ export const LESSON_THEMES = [
       ja: '移動・描写・人間関係・思考',
       en: 'movement, description, people, thinking',
       de: 'Bewegung, Beschreibung, Beziehungen, Denken',
+    },
+  },
+  {
+    title: {
+      ja: 'L2 抽象語彙',
+      en: 'L2 abstract vocabulary',
+      de: 'L2 abstrakter Wortschatz',
+    },
+    theme: {
+      ja: '学習・時間・価値観・理解',
+      en: 'learning, time, values, understanding',
+      de: 'Lernen, Zeit, Werte, Verstehen',
     },
   },
 ] as const
@@ -640,6 +657,244 @@ const CONCEPTS: ConceptSeed[] = [
       de: ['ich denke so', 'gut denken'],
     },
   },
+  {
+    id: 'learn',
+    level: 'L2',
+    partOfSpeech: 'verb',
+    lexemes: {
+      ja: {
+        lemma: '学ぶ',
+        reading: 'まなぶ',
+        pronunciation: 'manabu',
+        audioText: '学ぶ',
+        forms: [
+          { label: 'polite', value: '学びます' },
+          { label: 'past', value: '学んだ' },
+        ],
+        gloss: 'to learn or study deeply',
+        example: '毎日ドイツ語を学ぶ。',
+      },
+      en: {
+        lemma: 'learn',
+        pronunciation: '/lɜːrn/',
+        audioText: 'learn',
+        forms: [
+          { label: 'past', value: 'learned' },
+          { label: 'participle', value: 'learned' },
+        ],
+        gloss: 'to acquire knowledge or skill',
+        example: 'I learn German every day.',
+      },
+      de: {
+        lemma: 'lernen',
+        pronunciation: '/ˈlɛʁnən/',
+        audioText: 'lernen',
+        forms: [
+          { label: 'past', value: 'lernte' },
+          { label: 'participle', value: 'gelernt' },
+        ],
+        gloss: 'to learn or study',
+        example: 'Ich lerne jeden Tag Deutsch.',
+      },
+    },
+    translations: {
+      ja: '学ぶ',
+      en: 'learn',
+      de: 'lernen',
+    },
+    notes: {
+      'ja-en': 'learn は know と違い「学習プロセス」を含意。study と近いが自然な結果ニュアンス付き。',
+      'ja-de': 'lernen は不規則動詞ではなく、目的語は Akkusativ で取る。',
+      'en-ja': '学ぶ implies deeper study than 習う; 勉強する is broader.',
+      'en-de': 'lernen takes the thing being learned in the accusative: Deutsch lernen.',
+      'de-ja': '勉強する より 学ぶ は体系的な習得ニュアンス。',
+      'de-en': 'learn covers both the act and the outcome; study stresses the activity itself.',
+    },
+    examples: {
+      ja: '毎日ドイツ語を学ぶ。',
+      en: 'I learn German every day.',
+      de: 'Ich lerne jeden Tag Deutsch.',
+    },
+    collocations: {
+      ja: ['言語を学ぶ', '一から学ぶ'],
+      en: ['learn a language', 'learn from scratch'],
+      de: ['eine Sprache lernen', 'von Grund auf lernen'],
+    },
+  },
+  {
+    id: 'time',
+    level: 'L2',
+    partOfSpeech: 'noun',
+    lexemes: {
+      ja: {
+        lemma: '時間',
+        reading: 'じかん',
+        pronunciation: 'jikan',
+        audioText: '時間',
+        forms: [{ label: 'suffix', value: '時間がある' }],
+        gloss: 'time as an abstract or measurable unit',
+        example: '時間がありません。',
+      },
+      en: {
+        lemma: 'time',
+        pronunciation: '/taɪm/',
+        audioText: 'time',
+        forms: [{ label: 'plural', value: 'times' }],
+        gloss: 'time as duration or occasion',
+        example: "I don't have time.",
+      },
+      de: {
+        lemma: 'Zeit',
+        pronunciation: '/tsaɪ̯t/',
+        audioText: 'Zeit',
+        forms: [{ label: 'plural', value: 'Zeiten' }],
+        gloss: 'time as duration or era',
+        example: 'Ich habe keine Zeit.',
+      },
+    },
+    translations: {
+      ja: '時間',
+      en: 'time',
+      de: 'Zeit',
+    },
+    notes: {
+      'ja-en': 'time は文脈で可算/不可算が切り替わる（three times = 3回）。',
+      'ja-de': 'Zeit は女性名詞。die Zeit haben = 時間がある。',
+      'en-ja': '時間 means both "duration" and "clock hours"; 時 is more poetic.',
+      'en-de': 'Zeit is feminine; plural Zeiten often means "eras" or "times of X".',
+      'de-ja': '時間 ist am häufigsten für Dauer und Uhrzeit.',
+      'de-en': 'time is uncountable as duration but countable as occurrence.',
+    },
+    examples: {
+      ja: '時間がありません。',
+      en: "I don't have time.",
+      de: 'Ich habe keine Zeit.',
+    },
+    collocations: {
+      ja: ['時間がある', '時間をかける'],
+      en: ['have time', 'spend time'],
+      de: ['Zeit haben', 'Zeit verbringen'],
+    },
+  },
+  {
+    id: 'important',
+    level: 'L2',
+    partOfSpeech: 'adjective',
+    lexemes: {
+      ja: {
+        lemma: '大切',
+        reading: 'たいせつ',
+        pronunciation: 'taisetsu',
+        audioText: '大切',
+        forms: [{ label: 'attributive', value: '大切な' }],
+        gloss: 'important, precious',
+        example: '家族は大切です。',
+      },
+      en: {
+        lemma: 'important',
+        pronunciation: '/ɪmˈpɔːrtnt/',
+        audioText: 'important',
+        forms: [{ label: 'adverb', value: 'importantly' }],
+        gloss: 'having great value or meaning',
+        example: 'Family is important.',
+      },
+      de: {
+        lemma: 'wichtig',
+        pronunciation: '/ˈvɪçtɪç/',
+        audioText: 'wichtig',
+        forms: [{ label: 'comparative', value: 'wichtiger' }],
+        gloss: 'important',
+        example: 'Familie ist wichtig.',
+      },
+    },
+    translations: {
+      ja: '大切',
+      en: 'important',
+      de: 'wichtig',
+    },
+    notes: {
+      'ja-en': '大切 は感情的価値を含み、important は客観的重要度寄り。使い分けに注意。',
+      'ja-de': 'wichtig は客観的な重要度、大切 は感情を含む。類似語に bedeutend。',
+      'en-ja': '大切 carries warmth; 重要 is more formal and abstract.',
+      'en-de': 'wichtig is the default for "important"; bedeutend is more formal.',
+      'de-ja': '大切 betont emotionale Wertschätzung, 重要 sachliche Bedeutung.',
+      'de-en': 'important covers both objective importance and emotional value.',
+    },
+    examples: {
+      ja: '家族は大切です。',
+      en: 'Family is important.',
+      de: 'Familie ist wichtig.',
+    },
+    collocations: {
+      ja: ['大切な人', '大切にする'],
+      en: ['very important', 'important to me'],
+      de: ['sehr wichtig', 'wichtig fuer mich'],
+    },
+  },
+  {
+    id: 'understand',
+    level: 'L2',
+    partOfSpeech: 'verb',
+    lexemes: {
+      ja: {
+        lemma: '理解する',
+        reading: 'りかいする',
+        pronunciation: 'rikai suru',
+        audioText: '理解する',
+        forms: [
+          { label: 'casual', value: 'わかる' },
+          { label: 'past', value: '理解した' },
+        ],
+        gloss: 'to understand or comprehend',
+        example: '問題を理解する。',
+      },
+      en: {
+        lemma: 'understand',
+        pronunciation: '/ˌʌndərˈstænd/',
+        audioText: 'understand',
+        forms: [
+          { label: 'past', value: 'understood' },
+          { label: 'participle', value: 'understood' },
+        ],
+        gloss: 'to comprehend meaning',
+        example: 'I understand the problem.',
+      },
+      de: {
+        lemma: 'verstehen',
+        pronunciation: '/fɛɐ̯ˈʃteːən/',
+        audioText: 'verstehen',
+        forms: [
+          { label: 'past', value: 'verstand' },
+          { label: 'participle', value: 'verstanden' },
+        ],
+        gloss: 'to understand',
+        example: 'Ich verstehe das Problem.',
+      },
+    },
+    translations: {
+      ja: '理解する',
+      en: 'understand',
+      de: 'verstehen',
+    },
+    notes: {
+      'ja-en': 'understand は状態動詞で進行形にならないのが基本（I am understanding は不自然）。',
+      'ja-de': 'verstehen は不規則。分離動詞ではないので語順に注意。',
+      'en-ja': '理解する is more formal; わかる is everyday.',
+      'en-de': 'verstehen is the standard; kapieren is colloquial.',
+      'de-ja': 'わかる ist im Alltag haeufiger, 理解する in formellen Kontexten.',
+      'de-en': 'understand is usually stative; grasp can emphasize the moment of insight.',
+    },
+    examples: {
+      ja: '問題を理解する。',
+      en: 'I understand the problem.',
+      de: 'Ich verstehe das Problem.',
+    },
+    collocations: {
+      ja: ['意味を理解する', '深く理解する'],
+      en: ['understand clearly', 'understand deeply'],
+      de: ['klar verstehen', 'tief verstehen'],
+    },
+  },
 ]
 
 function languageLabel(code: LanguageCode, locale: LanguageCode) {
@@ -718,16 +973,22 @@ export const LESSONS: Lesson[] = LANGUAGE_PAIRS.flatMap((pair) => {
   const targetLexemes = LEXEMES.filter(
     (lexeme) => lexeme.language === pair.targetLanguage,
   )
-  const lessonGroups = [targetLexemes.slice(0, 4), targetLexemes.slice(4, 8)]
+  const byLevel = (level: LevelCode) =>
+    targetLexemes.filter((lexeme) => lexeme.level === level)
+  const lessonGroups: Array<{ level: LevelCode; group: Lexeme[] }> = [
+    { level: 'L0', group: byLevel('L0') },
+    { level: 'L1', group: byLevel('L1') },
+    { level: 'L2', group: byLevel('L2') },
+  ]
 
-  return lessonGroups.map((group, index) => {
+  return lessonGroups.map(({ level, group }, index) => {
     const lessonId = `${pair.id}-lesson-${index + 1}`
 
     return {
       id: lessonId,
       pairId: pair.id,
       order: index + 1,
-      level: index === 0 ? 'L0' : 'L1',
+      level,
       title: LESSON_THEMES[index].title,
       theme: LESSON_THEMES[index].theme,
       studyItemIds: group.map((lexeme) => `${pair.id}-${lexeme.conceptId}`),
@@ -738,6 +999,17 @@ export const LESSONS: Lesson[] = LANGUAGE_PAIRS.flatMap((pair) => {
 export const LESSON_RECORD = Object.fromEntries(
   LESSONS.map((lesson) => [lesson.id, lesson]),
 ) as Record<string, Lesson>
+
+function canCloze(lexeme: Lexeme) {
+  const sense = lexeme.senses[0]
+  const example = sense?.examples[0]?.target ?? ''
+  if (!example) return false
+  const haystack = example.toLowerCase()
+  if (haystack.includes(lexeme.lemma.toLowerCase())) return true
+  return lexeme.forms.some((form) =>
+    haystack.includes(form.value.toLowerCase()),
+  )
+}
 
 export const STUDY_ITEMS: StudyItem[] = LANGUAGE_PAIRS.flatMap((pair) => {
   const pairLessons = LESSONS.filter((lesson) => lesson.pairId === pair.id)
@@ -755,6 +1027,9 @@ export const STUDY_ITEMS: StudyItem[] = LANGUAGE_PAIRS.flatMap((pair) => {
         throw new Error(`Missing lexeme for ${studyItemId}`)
       }
 
+      const variants: CardVariantKind[] = ['recognition', 'recall']
+      if (canCloze(lexeme)) variants.push('cloze')
+
       return {
         id: studyItemId,
         pairId: pair.id,
@@ -762,11 +1037,34 @@ export const STUDY_ITEMS: StudyItem[] = LANGUAGE_PAIRS.flatMap((pair) => {
         senseId: lexeme.senses[0].id,
         lessonId: lesson.id,
         level: lexeme.level,
-        variants: [...SUPPORTED_VARIANTS],
+        variants,
       }
     }),
   )
 })
+
+export function buildClozePrompt(lexeme: Lexeme) {
+  const example = lexeme.senses[0]?.examples[0]?.target ?? ''
+  if (!example) return null
+  const candidates = [lexeme.lemma, ...lexeme.forms.map((form) => form.value)]
+
+  for (const candidate of candidates) {
+    if (!candidate) continue
+    const idx = example.toLowerCase().indexOf(candidate.toLowerCase())
+    if (idx >= 0) {
+      const matched = example.slice(idx, idx + candidate.length)
+      const before = example.slice(0, idx)
+      const after = example.slice(idx + candidate.length)
+      const blank = '_'.repeat(Math.max(4, candidate.length * 2))
+      return {
+        prompt: `${before}${blank}${after}`,
+        answer: matched,
+        full: example,
+      }
+    }
+  }
+  return null
+}
 
 export const STUDY_ITEM_RECORD = Object.fromEntries(
   STUDY_ITEMS.map((studyItem) => [studyItem.id, studyItem]),

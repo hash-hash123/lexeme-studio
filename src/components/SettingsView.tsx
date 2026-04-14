@@ -20,6 +20,7 @@ export function SettingsView({
   onPairChange,
   onProfileChange,
   onReset,
+  onReopenDiagnostic,
 }: {
   locale: LanguageCode
   profile: PersistedAppState['profile']
@@ -29,6 +30,7 @@ export function SettingsView({
   onPairChange: (nativeLanguage: LanguageCode, targetLanguage: LanguageCode) => void
   onProfileChange: (patch: Partial<PersistedAppState['profile']>) => void
   onReset: () => void
+  onReopenDiagnostic: () => void
 }) {
   return (
     <section className="panel settings-panel">
@@ -67,10 +69,13 @@ export function SettingsView({
           <span>{t(locale, 'goalLevel')}</span>
           <select
             value={profile.goalLevel}
-            onChange={(event) => onProfileChange({ goalLevel: event.target.value as 'L0' | 'L1' })}
+            onChange={(event) =>
+              onProfileChange({ goalLevel: event.target.value as 'L0' | 'L1' | 'L2' })
+            }
           >
             <option value="L0">{pickText(LEVEL_LABELS.L0, locale)}</option>
             <option value="L1">{pickText(LEVEL_LABELS.L1, locale)}</option>
+            <option value="L2">{pickText(LEVEL_LABELS.L2, locale)}</option>
           </select>
         </label>
 
@@ -106,9 +111,18 @@ export function SettingsView({
 
       <AuthPanel locale={locale} session={session} />
 
-      <button className="danger-button" onClick={onReset} type="button">
-        {t(locale, 'resetProgress')}
-      </button>
+      <div className="settings-actions">
+        <button
+          className="secondary-button"
+          onClick={onReopenDiagnostic}
+          type="button"
+        >
+          {t(locale, 'diagnosticRun')}
+        </button>
+        <button className="danger-button" onClick={onReset} type="button">
+          {t(locale, 'resetProgress')}
+        </button>
+      </div>
     </section>
   )
 }

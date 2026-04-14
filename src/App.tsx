@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { DashboardView } from './components/DashboardView'
 import { BrowserView } from './components/BrowserView'
+import { LevelDiagnostic } from './components/LevelDiagnostic'
 import { ReviewView } from './components/ReviewView'
 import { SettingsView } from './components/SettingsView'
 import {
@@ -34,7 +35,9 @@ import {
   upsertRemoteProfile,
   upsertRemoteReviewState,
 } from './lib/remoteSync'
-import type { LanguageCode, PartOfSpeech, PersistedAppState, ReviewLog } from './types'
+import type { LanguageCode, LevelCode, PartOfSpeech, PersistedAppState, ReviewLog } from './types'
+
+const DIAGNOSTIC_DONE_KEY = 'lexeme-studio:diagnostic-done:v1'
 
 type ViewName = 'dashboard' | 'review' | 'browser' | 'settings'
 
@@ -75,8 +78,12 @@ function App() {
   const [hydrated, setHydrated] = useState(false)
   const [appState, setAppState] = useState<PersistedAppState>(() => loadAppState())
   const [activeView, setActiveView] = useState<ViewName>('dashboard')
+  const [diagnosticOpen, setDiagnosticOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !window.localStorage.getItem(DIAGNOSTIC_DONE_KEY)
+  })
   const [search, setSearch] = useState('')
-  const [levelFilter, setLevelFilter] = useState<'all' | 'L0' | 'L1'>('all')
+  const [levelFilter, setLevelFilter] = useState<'all' | 'L0' | 'L1' | 'L2'>('all')
   const [partFilter, setPartFilter] = useState<'all' | PartOfSpeech>('all')
   const [lessonFilter, setLessonFilter] = useState<'all' | string>('all')
   const [selectedStudyItemId, setSelectedStudyItemId] = useState<string | null>(null)
@@ -267,8 +274,32 @@ function App() {
     })
   }
 
+  function completeDiagnostic(recommended: LevelCode) {
+    window.localStorage.setItem(DIAGNOSTIC_DONE_KEY, '1')
+    setDiagnosticOpen(false)
+    updateProfile({ goalLevel: recommended })
+  }
+
+  function skipDiagnostic() {
+    window.localStorage.setItem(DIAGNOSTIC_DONE_KEY, '1')
+    setDiagnosticOpen(false)
+  }
+
+  function reopenDiagnostic() {
+    window.localStorage.removeItem(DIAGNOSTIC_DONE_KEY)
+    setDiagnosticOpen(true)
+  }
+
   return (
     <div className="app-shell" style={shellStyle}>
+      {diagnosticOpen ? (
+        <LevelDiagnostic
+          locale={locale}
+          onComplete={completeDiagnostic}
+          onSkip={skipDiagnostic}
+          targetLanguage={currentPair.targetLanguage}
+        />
+      ) : null}
       <aside className="sidebar panel">
         <p className="eyebrow">{t(locale, 'strapline')}</p>
         <h1>{t(locale, 'brand')}</h1>
@@ -355,6 +386,7 @@ function App() {
             locale={locale}
             onPairChange={changePair}
             onProfileChange={updateProfile}
+            onReopenDiagnostic={reopenDiagnostic}
             onReset={() =>
               startTransition(() =>
                 setAppState((previous) => ({

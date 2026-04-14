@@ -29,12 +29,12 @@ export function BrowserView({
   entries: BrowserEntry[]
   selectedEntry: BrowserEntry | undefined
   search: string
-  levelFilter: 'all' | 'L0' | 'L1'
+  levelFilter: 'all' | 'L0' | 'L1' | 'L2'
   partFilter: 'all' | PartOfSpeech
   lessonFilter: 'all' | string
   lessonProgress: LessonProgress[]
   onSearchChange: (value: string) => void
-  onLevelChange: (value: 'all' | 'L0' | 'L1') => void
+  onLevelChange: (value: 'all' | 'L0' | 'L1' | 'L2') => void
   onPartChange: (value: 'all' | PartOfSpeech) => void
   onLessonChange: (value: string) => void
   onSelect: (studyItemId: string) => void
@@ -56,10 +56,11 @@ export function BrowserView({
           placeholder={t(locale, 'searchPlaceholder')}
           value={search}
         />
-        <select value={levelFilter} onChange={(event) => onLevelChange(event.target.value as 'all' | 'L0' | 'L1')}>
+        <select value={levelFilter} onChange={(event) => onLevelChange(event.target.value as 'all' | 'L0' | 'L1' | 'L2')}>
           <option value="all">{t(locale, 'allLevels')}</option>
           <option value="L0">{pickText(LEVEL_LABELS.L0, locale)}</option>
           <option value="L1">{pickText(LEVEL_LABELS.L1, locale)}</option>
+          <option value="L2">{pickText(LEVEL_LABELS.L2, locale)}</option>
         </select>
         <select value={partFilter} onChange={(event) => onPartChange(event.target.value as 'all' | PartOfSpeech)}>
           <option value="all">{t(locale, 'allParts')}</option>

@@ -2,6 +2,7 @@ import {
   LEXEME_RECORD,
   LESSON_RECORD,
   STUDY_ITEM_RECORD,
+  buildClozePrompt,
   getLessonsForPair,
   getStudyItemsForPair,
 } from '../data/content'
@@ -37,6 +38,9 @@ export interface QueueCard {
   note: string
   dueAt?: number
   lane: 'due' | 'new'
+  clozePrompt?: string
+  clozeAnswer?: string
+  clozeFull?: string
 }
 
 export interface BrowserEntry {
@@ -57,12 +61,16 @@ export function getLessonProgress(
   let unlocked = true
 
   return lessons.map((lesson) => {
-    const totalVariants = lesson.studyItemIds.length * 2
+    let totalVariants = 0
     let seenVariants = 0
     let masteredVariants = 0
 
     lesson.studyItemIds.forEach((studyItemId) => {
-      ;(['recognition', 'recall'] as CardVariantKind[]).forEach((variant) => {
+      const item = STUDY_ITEM_RECORD[studyItemId]
+      const variants = item?.variants ?? (['recognition', 'recall'] as CardVariantKind[])
+      totalVariants += variants.length
+
+      variants.forEach((variant) => {
         const state = reviewStates[getReviewKey(pairId, studyItemId, variant)]
 
         if (state) {
@@ -100,7 +108,9 @@ export function getItemMastery(
   itemId: string,
   reviewStates: Record<string, ReviewState>,
 ) {
-  const states = (['recognition', 'recall'] as CardVariantKind[])
+  const item = STUDY_ITEM_RECORD[itemId]
+  const variants = item?.variants ?? (['recognition', 'recall'] as CardVariantKind[])
+  const states = variants
     .map((variant) => reviewStates[getReviewKey(pairId, itemId, variant)])
     .filter(Boolean)
 
@@ -110,17 +120,15 @@ export function getItemMastery(
 
   const value =
     states.reduce((sum, state) => {
-      if (!state) {
-        return sum
-      }
-
+      if (!state) return sum
       return sum + Math.min(state.intervalDays / 4, 1)
-    }, 0) / 2
+    }, 0) / variants.length
 
   return {
     value,
     statusKey:
-      states.length === 2 && states.every((state) => (state?.intervalDays ?? 0) >= 3)
+      states.length === variants.length &&
+      states.every((state) => (state?.intervalDays ?? 0) >= 3)
         ? ('strong' as const)
         : ('learning' as const),
   }
@@ -145,9 +153,21 @@ export function buildQueueCards(
           lexeme.senses[0].translations.find((candidate) => candidate.pairId === pairId) ??
           lexeme.senses[0].translations[0]
 
+        const cloze = buildClozePrompt(lexeme)
+
         item.variants.forEach((variant) => {
+          if (variant === 'cloze' && !cloze) return
+
           const key = getReviewKey(pairId, item.id, variant)
           const state = reviewStates[key]
+          const clozeFields =
+            variant === 'cloze' && cloze
+              ? {
+                  clozePrompt: cloze.prompt,
+                  clozeAnswer: cloze.answer,
+                  clozeFull: cloze.full,
+                }
+              : {}
 
           if (state && state.dueAt <= now) {
             dueCards.push({
@@ -160,6 +180,7 @@ export function buildQueueCards(
               note: translation.note,
               dueAt: state.dueAt,
               lane: 'due',
+              ...clozeFields,
             })
           }
 
@@ -173,6 +194,7 @@ export function buildQueueCards(
               translationText: translation.text,
               note: translation.note,
               lane: 'new',
+              ...clozeFields,
             })
           }
         })

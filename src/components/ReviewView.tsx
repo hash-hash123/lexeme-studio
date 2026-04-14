@@ -10,6 +10,18 @@ function pickText(
   return value[locale]
 }
 
+function promptTextFor(card: QueueCard) {
+  if (card.variant === 'recognition') return card.lexeme.lemma
+  if (card.variant === 'recall') return card.translationText
+  return card.clozePrompt ?? card.lexeme.senses[0].examples[0]?.target ?? ''
+}
+
+function expectedAnswerFor(card: QueueCard) {
+  if (card.variant === 'recognition') return card.translationText
+  if (card.variant === 'recall') return card.lexeme.lemma
+  return card.clozeAnswer ?? card.lexeme.lemma
+}
+
 export function ReviewView({
   locale,
   currentCard,
@@ -42,12 +54,23 @@ export function ReviewView({
     )
   }
 
+  const prompt = promptTextFor(currentCard)
+  const expected = expectedAnswerFor(currentCard)
+  const isCloze = currentCard.variant === 'cloze'
+  const needsInput = currentCard.variant !== 'recognition'
+
   return (
     <section className="panel review-panel">
       <div className="section-header">
         <div>
           <p className="eyebrow">{t(locale, 'reviewReady')}</p>
-          <h3>{currentCard.lexeme.lemma}</h3>
+          <h3>
+            {isCloze
+              ? t(locale, 'clozeTitle')
+              : currentCard.variant === 'recall'
+                ? t(locale, 'recall')
+                : currentCard.lexeme.lemma}
+          </h3>
         </div>
         <span className="section-note">
           {t(locale, currentCard.variant)} · {pickText(currentCard.lesson.title, locale)}
@@ -57,16 +80,24 @@ export function ReviewView({
       <div className="card-stage">
         <div className="card-head">
           <div>
-            <p className="eyebrow">{t(locale, 'prompt')}</p>
-            <h2>
-              {currentCard.variant === 'recognition'
-                ? currentCard.lexeme.lemma
-                : currentCard.translationText}
-            </h2>
+            <p className="eyebrow">{t(locale, isCloze ? 'clozePromptLabel' : 'prompt')}</p>
+            <h2 className={isCloze ? 'cloze-prompt' : undefined}>{prompt}</h2>
+            {isCloze ? (
+              <p className="cloze-hint">
+                {t(locale, 'clozeHint')}: <strong>{currentCard.translationText}</strong>
+              </p>
+            ) : null}
           </div>
           <button
             className={`audio-button${speakingKey === currentCard.key ? ' is-speaking' : ''}`}
-            onClick={() => onSpeak(currentCard.key, currentCard.lexeme.audioText)}
+            onClick={() =>
+              onSpeak(
+                currentCard.key,
+                isCloze
+                  ? currentCard.clozeFull ?? currentCard.lexeme.audioText
+                  : currentCard.lexeme.audioText,
+              )
+            }
             type="button"
           >
             {t(locale, 'audio')}
@@ -79,7 +110,7 @@ export function ReviewView({
           {currentCard.lexeme.reading ? <span>{currentCard.lexeme.reading}</span> : null}
         </div>
 
-        {currentCard.variant === 'recall' && !revealed ? (
+        {needsInput && !revealed ? (
           <label className="answer-field">
             <span>{t(locale, 'yourAttempt')}</span>
             <input
@@ -99,16 +130,19 @@ export function ReviewView({
             <div className="answer-grid">
               <article>
                 <span>{t(locale, 'expectedAnswer')}</span>
-                <strong>
-                  {currentCard.variant === 'recognition'
-                    ? currentCard.translationText
-                    : currentCard.lexeme.lemma}
-                </strong>
+                <strong>{expected}</strong>
               </article>
-              <article>
-                <span>{t(locale, 'translation')}</span>
-                <strong>{currentCard.translationText}</strong>
-              </article>
+              {isCloze ? (
+                <article>
+                  <span>{t(locale, 'clozeFullLabel')}</span>
+                  <strong>{currentCard.clozeFull}</strong>
+                </article>
+              ) : (
+                <article>
+                  <span>{t(locale, 'translation')}</span>
+                  <strong>{currentCard.translationText}</strong>
+                </article>
+              )}
               <article>
                 <span>{t(locale, 'note')}</span>
                 <strong>{currentCard.note}</strong>
