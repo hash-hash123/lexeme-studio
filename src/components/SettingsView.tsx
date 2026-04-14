@@ -1,6 +1,8 @@
+import type { Session } from '@supabase/supabase-js'
 import { LEVEL_LABELS, getCourseForPair, getLanguage } from '../data/content'
 import { t } from '../lib/i18n'
 import type { LanguageCode, PersistedAppState } from '../types'
+import { AuthPanel } from './AuthPanel'
 
 function pickText(
   value: { ja: string; en: string; de: string },
@@ -14,6 +16,7 @@ export function SettingsView({
   profile,
   pairId,
   pairs,
+  session,
   onPairChange,
   onProfileChange,
   onReset,
@@ -22,6 +25,7 @@ export function SettingsView({
   profile: PersistedAppState['profile']
   pairId: string
   pairs: Array<{ id: string; nativeLanguage: LanguageCode; targetLanguage: LanguageCode }>
+  session: Session | null
   onPairChange: (nativeLanguage: LanguageCode, targetLanguage: LanguageCode) => void
   onProfileChange: (patch: Partial<PersistedAppState['profile']>) => void
   onReset: () => void
@@ -99,6 +103,8 @@ export function SettingsView({
           </select>
         </label>
       </div>
+
+      <AuthPanel locale={locale} session={session} />
 
       <button className="danger-button" onClick={onReset} type="button">
         {t(locale, 'resetProgress')}

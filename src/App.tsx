@@ -26,7 +26,15 @@ import {
 import { updateReviewState } from './lib/srs'
 import { DEFAULT_APP_STATE, loadAppState, saveAppState } from './lib/storage'
 import { getNowTimestamp } from './lib/time'
-import type { LanguageCode, PartOfSpeech, PersistedAppState } from './types'
+import { useAuth } from './lib/useAuth'
+import {
+  insertRemoteReviewLog,
+  loadRemoteState,
+  pushLocalStateToRemote,
+  upsertRemoteProfile,
+  upsertRemoteReviewState,
+} from './lib/remoteSync'
+import type { LanguageCode, PartOfSpeech, PersistedAppState, ReviewLog } from './types'
 
 type ViewName = 'dashboard' | 'review' | 'browser' | 'settings'
 
@@ -62,6 +70,9 @@ function speak(language: LanguageCode, text: string, done: () => void) {
 }
 
 function App() {
+  const { session } = useAuth()
+  const userId = session?.user.id ?? null
+  const [hydrated, setHydrated] = useState(false)
   const [appState, setAppState] = useState<PersistedAppState>(() => loadAppState())
   const [activeView, setActiveView] = useState<ViewName>('dashboard')
   const [search, setSearch] = useState('')
@@ -141,9 +152,71 @@ function App() {
       ?.replaceChildren(`${t(locale, 'brand')} - ${pickText(currentCourse.title, locale)}`)
   }, [locale, currentCourse.title])
 
+  // On sign-in: hydrate local state from Supabase, or push local to remote if remote is empty.
+  useEffect(() => {
+    if (!userId) {
+      setHydrated(false)
+      return
+    }
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const remote = await loadRemoteState(userId)
+        if (cancelled) return
+
+        if (remote) {
+          setAppState(remote)
+        } else {
+          const hasLocalProgress =
+            Object.keys(appState.reviewStates).length > 0 ||
+            appState.reviewLogs.length > 0
+
+          if (hasLocalProgress) {
+            await pushLocalStateToRemote(userId, appState)
+          } else {
+            await upsertRemoteProfile(userId, appState.profile)
+          }
+        }
+      } finally {
+        if (!cancelled) setHydrated(true)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+    // appState intentionally excluded: we only hydrate on sign-in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
+
+  // After hydration, mirror profile changes to Supabase.
+  useEffect(() => {
+    if (!userId || !hydrated) return
+    upsertRemoteProfile(userId, appState.profile).catch(() => {})
+  }, [userId, hydrated, appState.profile])
+
   function scoreCard(score: number) {
     if (!currentCard) return
     const reviewedAt = getNowTimestamp()
+    const previousReviewState = appState.reviewStates[currentCard.key]
+    const nextReviewState = updateReviewState(
+      previousReviewState,
+      pairId,
+      currentCard.item.id,
+      currentCard.variant,
+      score,
+      reviewedAt,
+    )
+    const nextLog: ReviewLog = {
+      id: `${currentCard.key}:${reviewedAt}`,
+      pairId,
+      studyItemId: currentCard.item.id,
+      variant: currentCard.variant,
+      score,
+      reviewedAt,
+    }
+
     setCardUiState({
       cardKey: null,
       revealed: false,
@@ -154,28 +227,16 @@ function App() {
         ...previous,
         reviewStates: {
           ...previous.reviewStates,
-          [currentCard.key]: updateReviewState(
-            previous.reviewStates[currentCard.key],
-            pairId,
-            currentCard.item.id,
-            currentCard.variant,
-            score,
-            reviewedAt,
-          ),
+          [currentCard.key]: nextReviewState,
         },
-        reviewLogs: [
-          ...previous.reviewLogs.slice(-399),
-          {
-            id: `${currentCard.key}:${reviewedAt}`,
-            pairId,
-            studyItemId: currentCard.item.id,
-            variant: currentCard.variant,
-            score,
-            reviewedAt,
-          },
-        ],
+        reviewLogs: [...previous.reviewLogs.slice(-399), nextLog],
       }))
     })
+
+    if (userId && hydrated) {
+      upsertRemoteReviewState(userId, nextReviewState).catch(() => {})
+      insertRemoteReviewLog(userId, nextLog).catch(() => {})
+    }
   }
 
   function changePair(nativeLanguage: LanguageCode, targetLanguage: LanguageCode) {
@@ -305,6 +366,7 @@ function App() {
             pairId={pairId}
             pairs={LANGUAGE_PAIRS}
             profile={appState.profile}
+            session={session}
           />
         ) : null}
       </main>
