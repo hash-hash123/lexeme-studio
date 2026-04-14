@@ -21,6 +21,7 @@ export function SettingsView({
   onProfileChange,
   onReset,
   onReopenDiagnostic,
+  onReopenPairPicker,
 }: {
   locale: LanguageCode
   profile: PersistedAppState['profile']
@@ -31,6 +32,7 @@ export function SettingsView({
   onProfileChange: (patch: Partial<PersistedAppState['profile']>) => void
   onReset: () => void
   onReopenDiagnostic: () => void
+  onReopenPairPicker: () => void
 }) {
   return (
     <section className="panel settings-panel">
@@ -112,6 +114,13 @@ export function SettingsView({
       <AuthPanel locale={locale} session={session} />
 
       <div className="settings-actions">
+        <button
+          className="secondary-button"
+          onClick={onReopenPairPicker}
+          type="button"
+        >
+          {t(locale, 'changeLanguages')}
+        </button>
         <button
           className="secondary-button"
           onClick={onReopenDiagnostic}

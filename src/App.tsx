@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { DashboardView } from './components/DashboardView'
 import { BrowserView } from './components/BrowserView'
+import { LanguagePicker } from './components/LanguagePicker'
 import { LevelDiagnostic } from './components/LevelDiagnostic'
 import { ReviewView } from './components/ReviewView'
 import { SettingsView } from './components/SettingsView'
@@ -39,6 +40,15 @@ import {
 import type { LanguageCode, LevelCode, PartOfSpeech, PersistedAppState, ReviewLog } from './types'
 
 const DIAGNOSTIC_DONE_KEY = 'lexeme-studio:diagnostic-done:v1'
+const PAIR_PICKED_KEY = 'lexeme-studio:pair-picked:v1'
+
+function detectInitialLocale(): LanguageCode {
+  if (typeof navigator === 'undefined') return 'en'
+  const raw = navigator.language?.slice(0, 2).toLowerCase()
+  if (raw === 'ja') return 'ja'
+  if (raw === 'de') return 'de'
+  return 'en'
+}
 
 type ViewName = 'dashboard' | 'review' | 'browser' | 'settings'
 
@@ -79,6 +89,10 @@ function App() {
   const [hydrated, setHydrated] = useState(false)
   const [appState, setAppState] = useState<PersistedAppState>(() => loadAppState())
   const [activeView, setActiveView] = useState<ViewName>('dashboard')
+  const [pairPickerOpen, setPairPickerOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !window.localStorage.getItem(PAIR_PICKED_KEY)
+  })
   const [diagnosticOpen, setDiagnosticOpen] = useState(() => {
     if (typeof window === 'undefined') return false
     return !window.localStorage.getItem(DIAGNOSTIC_DONE_KEY)
@@ -176,6 +190,9 @@ function App() {
 
         if (remote) {
           setAppState(remote)
+          // Returning user on a new device — they already picked languages before.
+          window.localStorage.setItem(PAIR_PICKED_KEY, '1')
+          setPairPickerOpen(false)
         } else {
           const hasLocalProgress =
             Object.keys(appState.reviewStates).length > 0 ||
@@ -276,6 +293,19 @@ function App() {
     })
   }
 
+  function completePairPick(
+    nativeLanguage: LanguageCode,
+    targetLanguage: LanguageCode,
+  ) {
+    window.localStorage.setItem(PAIR_PICKED_KEY, '1')
+    setPairPickerOpen(false)
+    changePair(nativeLanguage, targetLanguage)
+  }
+
+  function reopenPairPicker() {
+    setPairPickerOpen(true)
+  }
+
   function completeDiagnostic(recommended: LevelCode) {
     window.localStorage.setItem(DIAGNOSTIC_DONE_KEY, '1')
     setDiagnosticOpen(false)
@@ -294,7 +324,14 @@ function App() {
 
   return (
     <div className="app-shell" style={shellStyle}>
-      {diagnosticOpen ? (
+      {pairPickerOpen ? (
+        <LanguagePicker
+          initialLocale={
+            appState.profile.nativeLanguage ?? detectInitialLocale()
+          }
+          onComplete={completePairPick}
+        />
+      ) : diagnosticOpen ? (
         <LevelDiagnostic
           locale={locale}
           onComplete={completeDiagnostic}
@@ -390,6 +427,7 @@ function App() {
             onPairChange={changePair}
             onProfileChange={updateProfile}
             onReopenDiagnostic={reopenDiagnostic}
+            onReopenPairPicker={reopenPairPicker}
             onReset={() =>
               startTransition(() =>
                 setAppState((previous) => ({
