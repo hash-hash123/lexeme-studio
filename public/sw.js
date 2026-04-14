@@ -1,15 +1,19 @@
 /* Lexeme Studio service worker — network-first for HTML, cache-first for static assets. */
-const CACHE_VERSION = 'lexeme-studio-v1'
-const OFFLINE_URL = '/lexeme-studio/'
+/* Portable across deployments: all paths are derived from the registration scope. */
+const CACHE_VERSION = 'lexeme-studio-v2'
+
+function scopedUrl(path) {
+  return new URL(path, self.registration.scope).pathname
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) =>
       cache.addAll([
-        '/lexeme-studio/',
-        '/lexeme-studio/index.html',
-        '/lexeme-studio/manifest.webmanifest',
-        '/lexeme-studio/favicon.svg',
+        scopedUrl('./'),
+        scopedUrl('./index.html'),
+        scopedUrl('./manifest.webmanifest'),
+        scopedUrl('./favicon.svg'),
       ]),
     ),
   )
@@ -51,7 +55,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           const cached = await caches.match(request)
-          return cached ?? caches.match(OFFLINE_URL)
+          return cached ?? caches.match(scopedUrl('./'))
         }),
     )
     return
