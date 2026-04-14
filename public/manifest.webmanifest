@@ -1,0 +1,18 @@
+{
+  "name": "Lexeme Studio",
+  "short_name": "Lexeme",
+  "description": "Lexeme-centric multilingual SRS for Japanese, English, and German learners.",
+  "start_url": "/lexeme-studio/",
+  "scope": "/lexeme-studio/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/lexeme-studio/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
