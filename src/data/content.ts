@@ -35,7 +35,12 @@ interface ConceptSeed {
   collocations: Record<LanguageCode, string[]>
 }
 
-export const SUPPORTED_VARIANTS: CardVariantKind[] = ['recognition', 'recall', 'cloze']
+export const SUPPORTED_VARIANTS: CardVariantKind[] = [
+  'recognition',
+  'recall',
+  'cloze',
+  'discriminate',
+]
 
 export const LANGUAGES: Language[] = [
   {
@@ -925,7 +930,152 @@ function buildCourseText(pair: LanguagePair, locale: LanguageCode) {
   }
 }
 
-export const LEXEMES: Lexeme[] = CONCEPTS.flatMap((concept) =>
+// Hand-authored polysemous lexemes (multiple senses per lemma).
+// Scoped to English verbs where polysemy is most prominent and requirements-aligned (§6.2).
+const POLYSEMOUS_LEXEMES: Lexeme[] = [
+  {
+    id: 'en-run',
+    conceptId: 'run',
+    language: 'en',
+    lemma: 'run',
+    pronunciation: '/rʌn/',
+    partOfSpeech: 'verb',
+    level: 'L2',
+    forms: [
+      { label: 'past', value: 'ran' },
+      { label: 'participle', value: 'run' },
+    ],
+    audioText: 'run',
+    senses: [
+      {
+        id: 'en-run-move',
+        gloss: 'to move swiftly on foot',
+        translations: [
+          {
+            pairId: 'ja-en',
+            text: '走る',
+            note: '身体運動の「走る」。jog との違いは速さ・連続性。',
+          },
+          {
+            pairId: 'de-en',
+            text: 'laufen',
+            note: '"laufen" kann aber auch "gehen" bedeuten; "rennen" ist eindeutiger.',
+          },
+        ],
+        examples: [
+          {
+            target: 'I run every morning.',
+            translations: {
+              ja: '毎朝走っています。',
+              en: 'I run every morning.',
+              de: 'Ich laufe jeden Morgen.',
+            },
+          },
+        ],
+        collocations: ['run fast', 'run a marathon', 'go for a run'],
+      },
+      {
+        id: 'en-run-operate',
+        gloss: 'to operate or manage (a business, system, etc.)',
+        translations: [
+          {
+            pairId: 'ja-en',
+            text: '運営する',
+            note: '会社・組織・システムなどを「回す／経営する」意味。manage に近いが動的。',
+          },
+          {
+            pairId: 'de-en',
+            text: 'fuehren / betreiben',
+            note: '"betreiben" fuer Firmen/Systeme; "fuehren" fuer Organisationen.',
+          },
+        ],
+        examples: [
+          {
+            target: 'She runs a small bakery.',
+            translations: {
+              ja: '彼女は小さなパン屋を運営している。',
+              en: 'She runs a small bakery.',
+              de: 'Sie fuehrt eine kleine Baeckerei.',
+            },
+          },
+        ],
+        collocations: ['run a business', 'run a company', 'run the show'],
+      },
+    ],
+  },
+  {
+    id: 'en-take',
+    conceptId: 'take',
+    language: 'en',
+    lemma: 'take',
+    pronunciation: '/teɪk/',
+    partOfSpeech: 'verb',
+    level: 'L2',
+    forms: [
+      { label: 'past', value: 'took' },
+      { label: 'participle', value: 'taken' },
+    ],
+    audioText: 'take',
+    senses: [
+      {
+        id: 'en-take-grab',
+        gloss: 'to pick up or carry something',
+        translations: [
+          {
+            pairId: 'ja-en',
+            text: '取る',
+            note: '物を手に取る・持つ。広範に使える最重要語の一つ。',
+          },
+          {
+            pairId: 'de-en',
+            text: 'nehmen',
+            note: '"nehmen" ist die haeufigste Uebersetzung fuer dieses Sinn.',
+          },
+        ],
+        examples: [
+          {
+            target: 'Please take this bag.',
+            translations: {
+              ja: 'このバッグを取ってください。',
+              en: 'Please take this bag.',
+              de: 'Bitte nimm diese Tasche.',
+            },
+          },
+        ],
+        collocations: ['take a seat', 'take a book', 'take it with you'],
+      },
+      {
+        id: 'en-take-time',
+        gloss: 'to require a duration of time',
+        translations: [
+          {
+            pairId: 'ja-en',
+            text: 'かかる',
+            note: '時間・お金・労力などが「かかる」。主語は行為ではなく要する物。',
+          },
+          {
+            pairId: 'de-en',
+            text: 'dauern / brauchen',
+            note: '"es dauert ..." fuer Zeit; "etwas braucht ..." allgemeiner.',
+          },
+        ],
+        examples: [
+          {
+            target: 'It takes two hours by train.',
+            translations: {
+              ja: '電車で2時間かかります。',
+              en: 'It takes two hours by train.',
+              de: 'Es dauert zwei Stunden mit dem Zug.',
+            },
+          },
+        ],
+        collocations: ['take time', 'take hours', 'take a while'],
+      },
+    ],
+  },
+]
+
+export const LEXEMES: Lexeme[] = [...POLYSEMOUS_LEXEMES, ...CONCEPTS.flatMap((concept) =>
   (Object.keys(concept.lexemes) as LanguageCode[]).map((languageCode) => {
     const seed = concept.lexemes[languageCode]
     const translations = LANGUAGE_PAIRS.filter(
@@ -963,7 +1113,7 @@ export const LEXEMES: Lexeme[] = CONCEPTS.flatMap((concept) =>
       ],
     }
   }),
-)
+)]
 
 export const LEXEME_RECORD = Object.fromEntries(
   LEXEMES.map((lexeme) => [lexeme.id, lexeme]),
@@ -1029,6 +1179,7 @@ export const STUDY_ITEMS: StudyItem[] = LANGUAGE_PAIRS.flatMap((pair) => {
 
       const variants: CardVariantKind[] = ['recognition', 'recall']
       if (canCloze(lexeme)) variants.push('cloze')
+      if (lexeme.senses.length >= 2) variants.push('discriminate')
 
       return {
         id: studyItemId,
@@ -1042,6 +1193,70 @@ export const STUDY_ITEMS: StudyItem[] = LANGUAGE_PAIRS.flatMap((pair) => {
     }),
   )
 })
+
+export interface DiscriminatePrompt {
+  example: string
+  exampleTranslation?: string
+  correctSenseId: string
+  correctText: string
+  correctNote: string
+  options: Array<{ senseId: string; text: string; note: string }>
+}
+
+export function buildDiscriminatePrompt(
+  lexeme: Lexeme,
+  pairId: string,
+): DiscriminatePrompt | null {
+  if (lexeme.senses.length < 2) return null
+  const [primarySense, ...otherSenses] = lexeme.senses
+  const primaryTranslation = primarySense.translations.find(
+    (entry) => entry.pairId === pairId,
+  )
+  if (!primaryTranslation) return null
+
+  const distractors = otherSenses
+    .map((sense) => {
+      const translation = sense.translations.find(
+        (entry) => entry.pairId === pairId,
+      )
+      return translation
+        ? { senseId: sense.id, text: translation.text, note: translation.note }
+        : null
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+
+  if (distractors.length === 0) return null
+
+  const example = primarySense.examples[0]
+  if (!example) return null
+
+  // For pairs where the native language has an entry in example.translations,
+  // surface it to help the learner. Pair format is 'xx-yy' where xx is native.
+  const nativeCode = pairId.split('-')[0] as 'ja' | 'en' | 'de'
+  const translationForNative = example.translations[nativeCode]
+
+  const options = [
+    {
+      senseId: primarySense.id,
+      text: primaryTranslation.text,
+      note: primaryTranslation.note,
+    },
+    ...distractors,
+  ]
+
+  // Deterministic shuffle based on lexeme id so same card shows same order.
+  const hash = lexeme.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  if (hash % 2 === 1) options.reverse()
+
+  return {
+    example: example.target,
+    exampleTranslation: translationForNative,
+    correctSenseId: primarySense.id,
+    correctText: primaryTranslation.text,
+    correctNote: primaryTranslation.note,
+    options,
+  }
+}
 
 export function buildClozePrompt(lexeme: Lexeme) {
   const example = lexeme.senses[0]?.examples[0]?.target ?? ''

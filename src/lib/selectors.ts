@@ -3,9 +3,11 @@ import {
   LESSON_RECORD,
   STUDY_ITEM_RECORD,
   buildClozePrompt,
+  buildDiscriminatePrompt,
   getLessonsForPair,
   getStudyItemsForPair,
 } from '../data/content'
+import type { DiscriminatePrompt } from '../data/content'
 import { getReviewKey } from './srs'
 import type {
   CardVariantKind,
@@ -19,6 +21,66 @@ import type {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const MAX_NEW_ITEMS = 6
+
+export interface LearningInsights {
+  streakDays: number
+  reviewsLast7: number
+  reviewsLast30: number
+  retentionLast7: number
+  retentionLast30: number
+  levelsCompleted: number
+  totalLevels: number
+}
+
+export function getLearningInsights(
+  pairId: string,
+  reviewLogs: ReviewLog[],
+  lessonProgress: LessonProgress[],
+): LearningInsights {
+  const now = Date.now()
+  const pairLogs = reviewLogs.filter((log) => log.pairId === pairId)
+  const last7Logs = pairLogs.filter((log) => now - log.reviewedAt <= 7 * DAY_MS)
+  const last30Logs = pairLogs.filter((log) => now - log.reviewedAt <= 30 * DAY_MS)
+
+  // Daily streak: consecutive distinct local-date days with at least one review,
+  // counting backwards from today (or yesterday if no review today).
+  const daySet = new Set<string>()
+  pairLogs.forEach((log) => {
+    const date = new Date(log.reviewedAt)
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    daySet.add(key)
+  })
+
+  let streak = 0
+  const cursor = new Date()
+  cursor.setHours(0, 0, 0, 0)
+  if (daySet.size > 0) {
+    if (!daySet.has(`${cursor.getFullYear()}-${cursor.getMonth()}-${cursor.getDate()}`)) {
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    while (
+      daySet.has(`${cursor.getFullYear()}-${cursor.getMonth()}-${cursor.getDate()}`)
+    ) {
+      streak += 1
+      cursor.setDate(cursor.getDate() - 1)
+    }
+  }
+
+  const retention = (logs: ReviewLog[]) =>
+    logs.length === 0
+      ? 0
+      : logs.filter((log) => log.score >= 2).length / logs.length
+
+  return {
+    streakDays: streak,
+    reviewsLast7: last7Logs.length,
+    reviewsLast30: last30Logs.length,
+    retentionLast7: retention(last7Logs),
+    retentionLast30: retention(last30Logs),
+    levelsCompleted: lessonProgress.filter((entry) => entry.status === 'done').length,
+    totalLevels: lessonProgress.length,
+  }
+}
 
 export interface LessonProgress {
   lesson: Lesson
@@ -41,6 +103,7 @@ export interface QueueCard {
   clozePrompt?: string
   clozeAnswer?: string
   clozeFull?: string
+  discriminate?: DiscriminatePrompt
 }
 
 export interface BrowserEntry {
@@ -154,20 +217,24 @@ export function buildQueueCards(
           lexeme.senses[0].translations[0]
 
         const cloze = buildClozePrompt(lexeme)
+        const discriminate = buildDiscriminatePrompt(lexeme, pairId)
 
         item.variants.forEach((variant) => {
           if (variant === 'cloze' && !cloze) return
+          if (variant === 'discriminate' && !discriminate) return
 
           const key = getReviewKey(pairId, item.id, variant)
           const state = reviewStates[key]
-          const clozeFields =
+          const extraFields =
             variant === 'cloze' && cloze
               ? {
                   clozePrompt: cloze.prompt,
                   clozeAnswer: cloze.answer,
                   clozeFull: cloze.full,
                 }
-              : {}
+              : variant === 'discriminate' && discriminate
+                ? { discriminate }
+                : {}
 
           if (state && state.dueAt <= now) {
             dueCards.push({
@@ -180,7 +247,7 @@ export function buildQueueCards(
               note: translation.note,
               dueAt: state.dueAt,
               lane: 'due',
-              ...clozeFields,
+              ...extraFields,
             })
           }
 
@@ -194,7 +261,7 @@ export function buildQueueCards(
               translationText: translation.text,
               note: translation.note,
               lane: 'new',
-              ...clozeFields,
+              ...extraFields,
             })
           }
         })

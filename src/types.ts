@@ -1,6 +1,6 @@
 export type LanguageCode = 'ja' | 'en' | 'de'
 export type LevelCode = 'L0' | 'L1' | 'L2'
-export type CardVariantKind = 'recognition' | 'recall' | 'cloze'
+export type CardVariantKind = 'recognition' | 'recall' | 'cloze' | 'discriminate'
 export type LearningPurpose = 'conversation' | 'travel' | 'exam' | 'reading'
 export type PartOfSpeech =
   | 'interjection'

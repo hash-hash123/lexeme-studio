@@ -21,6 +21,7 @@ import { t } from './lib/i18n'
 import {
   buildQueueCards,
   getBrowserEntries,
+  getLearningInsights,
   getLessonProgress,
   getReviewStats,
 } from './lib/selectors'
@@ -109,6 +110,7 @@ function App() {
   const lessonProgress = getLessonProgress(pairId, appState.reviewStates)
   const queue = buildQueueCards(pairId, appState.reviewStates)
   const stats = getReviewStats(pairId, appState.reviewStates, appState.reviewLogs)
+  const insights = getLearningInsights(pairId, appState.reviewLogs, lessonProgress)
   const currentCard = queue.queue[0]
   const revealed =
     currentCard?.key !== undefined &&
@@ -324,6 +326,7 @@ function App() {
           <DashboardView
             currentCourse={currentCourse}
             currentPair={currentPair}
+            insights={insights}
             lessonProgress={lessonProgress}
             locale={locale}
             onOpenBrowser={() => setActiveView('browser')}

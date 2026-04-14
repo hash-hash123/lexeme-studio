@@ -13,12 +13,16 @@ function pickText(
 function promptTextFor(card: QueueCard) {
   if (card.variant === 'recognition') return card.lexeme.lemma
   if (card.variant === 'recall') return card.translationText
+  if (card.variant === 'discriminate') {
+    return card.discriminate?.example ?? card.lexeme.senses[0].examples[0]?.target ?? ''
+  }
   return card.clozePrompt ?? card.lexeme.senses[0].examples[0]?.target ?? ''
 }
 
 function expectedAnswerFor(card: QueueCard) {
   if (card.variant === 'recognition') return card.translationText
   if (card.variant === 'recall') return card.lexeme.lemma
+  if (card.variant === 'discriminate') return card.discriminate?.correctText ?? ''
   return card.clozeAnswer ?? card.lexeme.lemma
 }
 
@@ -57,7 +61,9 @@ export function ReviewView({
   const prompt = promptTextFor(currentCard)
   const expected = expectedAnswerFor(currentCard)
   const isCloze = currentCard.variant === 'cloze'
-  const needsInput = currentCard.variant !== 'recognition'
+  const isDiscriminate = currentCard.variant === 'discriminate'
+  const needsInput =
+    currentCard.variant !== 'recognition' && currentCard.variant !== 'discriminate'
 
   return (
     <section className="panel review-panel">
@@ -67,9 +73,11 @@ export function ReviewView({
           <h3>
             {isCloze
               ? t(locale, 'clozeTitle')
-              : currentCard.variant === 'recall'
-                ? t(locale, 'recall')
-                : currentCard.lexeme.lemma}
+              : isDiscriminate
+                ? t(locale, 'discriminateTitle')
+                : currentCard.variant === 'recall'
+                  ? t(locale, 'recall')
+                  : currentCard.lexeme.lemma}
           </h3>
         </div>
         <span className="section-note">
@@ -80,11 +88,28 @@ export function ReviewView({
       <div className="card-stage">
         <div className="card-head">
           <div>
-            <p className="eyebrow">{t(locale, isCloze ? 'clozePromptLabel' : 'prompt')}</p>
-            <h2 className={isCloze ? 'cloze-prompt' : undefined}>{prompt}</h2>
+            <p className="eyebrow">
+              {t(
+                locale,
+                isCloze
+                  ? 'clozePromptLabel'
+                  : isDiscriminate
+                    ? 'discriminatePromptLabel'
+                    : 'prompt',
+              )}
+            </p>
+            <h2 className={isCloze || isDiscriminate ? 'cloze-prompt' : undefined}>
+              {prompt}
+            </h2>
             {isCloze ? (
               <p className="cloze-hint">
                 {t(locale, 'clozeHint')}: <strong>{currentCard.translationText}</strong>
+              </p>
+            ) : null}
+            {isDiscriminate && currentCard.discriminate?.exampleTranslation ? (
+              <p className="cloze-hint">
+                {t(locale, 'discriminateSentenceHint')}:{' '}
+                <strong>{currentCard.discriminate.exampleTranslation}</strong>
               </p>
             ) : null}
           </div>
@@ -121,6 +146,25 @@ export function ReviewView({
           </label>
         ) : null}
 
+        {isDiscriminate && !revealed ? (
+          <div className="discriminate-options">
+            <p className="eyebrow">{t(locale, 'discriminateChoose')}</p>
+            {currentCard.discriminate?.options.map((option) => (
+              <button
+                className={`discriminate-option${
+                  draftAnswer === option.senseId ? ' is-selected' : ''
+                }`}
+                key={option.senseId}
+                onClick={() => onDraftChange(option.senseId)}
+                type="button"
+              >
+                <strong>{option.text}</strong>
+                <span>{option.note}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {!revealed ? (
           <button className="primary-button" onClick={onReveal} type="button">
             {t(locale, 'showAnswer')}
@@ -136,6 +180,15 @@ export function ReviewView({
                 <article>
                   <span>{t(locale, 'clozeFullLabel')}</span>
                   <strong>{currentCard.clozeFull}</strong>
+                </article>
+              ) : isDiscriminate ? (
+                <article>
+                  <span>{t(locale, 'discriminateYourPick')}</span>
+                  <strong>
+                    {currentCard.discriminate?.options.find(
+                      (option) => option.senseId === draftAnswer,
+                    )?.text ?? '-'}
+                  </strong>
                 </article>
               ) : (
                 <article>
